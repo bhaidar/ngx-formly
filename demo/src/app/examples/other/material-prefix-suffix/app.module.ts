@@ -1,14 +1,12 @@
-import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule } from '@angular/forms';
-import { FormlyModule } from '@ngx-formly/core';
-import { FormlyMaterialModule } from '@ngx-formly/material';
+import { NgModule } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { ReactiveFormsModule } from "@angular/forms";
+import { FormlyModule } from "@ngx-formly/core";
+import { FormlyMaterialModule } from "@ngx-formly/material";
 
-import { AppComponent } from './app.component';
-import { FormlyWrapperAddons } from './addons';
-import { addonsExtension } from './addon';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-
+import { AppComponent } from "./app.component";
+import { FormlyWrapperAddons } from "./addons.wrapper";
+import { addonsExtension } from "./addons.extension";
 
 @NgModule({
   imports: [
@@ -16,17 +14,12 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     ReactiveFormsModule,
     FormlyMaterialModule,
     FormlyModule.forRoot({
-      wrappers: [
-        { name: 'addons', component: FormlyWrapperAddons },
-      ],
+      wrappers: [{ name: "addons", component: FormlyWrapperAddons }],
       extensions: [
-        { name: 'addons', extension: { onPopulate: addonsExtension } },
-      ],
-    }),
+        { name: "addons", extension: { onPopulate: addonsExtension } }
+      ]
+    })
   ],
-  declarations: [
-    AppComponent,
-    FormlyWrapperAddons,
-  ],
+  declarations: [AppComponent, FormlyWrapperAddons]
 })
-export class AppModule { }
+export class AppModule {}

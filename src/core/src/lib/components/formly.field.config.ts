@@ -1,8 +1,8 @@
-import { FormGroup, AbstractControl, FormGroupDirective, NgForm, FormArray, AsyncValidatorFn, ValidatorFn } from '@angular/forms';
+import { FormGroup, AbstractControl, FormGroupDirective, FormArray, AsyncValidatorFn, ValidatorFn } from '@angular/forms';
 import { Subject, Observable } from 'rxjs';
 import { FieldType } from '../templates/field.type';
 import { TemplateManipulators } from '../services/formly.config';
-import { ComponentFactoryResolver, ComponentRef } from '@angular/core';
+import { ComponentFactoryResolver, ComponentRef, Injector } from '@angular/core';
 
 export interface FormlyFieldConfig {
   /**
@@ -249,6 +249,7 @@ export interface FormlyFormOptionsCache extends FormlyFormOptions {
   _markForCheck?: (field: FormlyFieldConfigCache) => void;
   _buildForm?: () => void;
   _componentFactoryResolver?: ComponentFactoryResolver;
+  _injector?: Injector;
 }
 export interface FormlyFormOptions {
   updateInitialValue?: () => void;
@@ -257,7 +258,7 @@ export interface FormlyFormOptions {
   fieldChanges?: Subject<FormlyValueChangeEvent>;
   fieldTransform?: (fields: FormlyFieldConfig[], model: any, form: FormGroup | FormArray, options: FormlyFormOptions) => FormlyFieldConfig[];
   showError?: (field: FieldType) => boolean;
-  parentForm?: FormGroupDirective | NgForm | null;
+  parentForm?: FormGroupDirective | null;
 }
 
 export interface FormlyValueChangeEvent {

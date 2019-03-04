@@ -1,5 +1,7 @@
-import { Directive, HostListener, ElementRef, Input, OnChanges, SimpleChanges, Renderer2, DoCheck } from '@angular/core';
+import { Directive, ElementRef, Input, OnChanges, SimpleChanges, Renderer2, DoCheck, Inject, OnDestroy } from '@angular/core';
 import { FormlyFieldConfig, FormlyTemplateOptions } from './formly.field.config';
+import { wrapProperty, defineHiddenProp } from '../utils';
+import { DOCUMENT } from '@angular/common';
 
 @Directive({
   selector: '[formlyAttributes]',
@@ -7,6 +9,8 @@ import { FormlyFieldConfig, FormlyTemplateOptions } from './formly.field.config'
     '[attr.name]': 'field.name',
     '[attr.step]': 'to.step',
 
+    '(focus)': 'onFocus($event)',
+    '(blur)': 'onBlur($event)',
     '(keyup)': 'to.keyup && to.keyup(field, $event)',
     '(keydown)': 'to.keydown && to.keydown(field, $event)',
     '(click)': 'to.click && to.click(field, $event)',
@@ -14,53 +18,53 @@ import { FormlyFieldConfig, FormlyTemplateOptions } from './formly.field.config'
     '(keypress)': 'to.keypress && to.keypress(field, $event)',
   },
 })
-export class FormlyAttributes implements OnChanges, DoCheck {
+export class FormlyAttributes implements OnChanges, DoCheck, OnDestroy {
   @Input('formlyAttributes') field: FormlyFieldConfig;
 
   private placeholder?: string;
   private tabindex?: number;
   private readonly?: boolean;
+  private document: Document;
+  get to(): FormlyTemplateOptions { return this.field.templateOptions || {}; }
 
-  @HostListener('focus', ['$event']) onFocus($event) {
-    this.field.focus = true;
-    if (this.to.focus) {
-      this.to.focus(this.field, $event);
-    }
-  }
-
-  @HostListener('blur', ['$event']) onBlur($event) {
-    this.field.focus = false;
-    if (this.to.blur) {
-      this.to.blur(this.field, $event);
-    }
-  }
-
-  get to(): FormlyTemplateOptions {
-    return this.field.templateOptions || {};
+  private get fieldAttrElements() { return (this.field && this.field['_attrElements']) || []; }
+  private set fieldAttrElements(elements: any[]) {
+    this.field && defineHiddenProp(this.field, '_attrElements', elements);
   }
 
   constructor(
     private renderer: Renderer2,
     private elementRef: ElementRef,
-  ) {}
+    @Inject(DOCUMENT) _document: any,
+  ) {
+    this.document = _document;
+  }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.field) {
-      const fieldChanges = changes.field;
-
       this.renderer.setAttribute(this.elementRef.nativeElement, 'id', this.field.id);
       if (this.to && this.to.attributes) {
-        this.setAttributes(this.to.attributes);
-        Object.defineProperty(this.to, 'attributes', {
-          get: () => this.to.__attributes__,
-          set: attributes => this.setAttributes(attributes),
-          enumerable: true,
-          configurable: true,
+        wrapProperty(this.to, 'attributes', (newVal, oldValue) => {
+          if (oldValue) {
+            Object.keys(oldValue).forEach(attr => this.renderer.removeAttribute(this.elementRef.nativeElement, attr));
+          }
+
+          if (newVal) {
+            Object.keys(newVal).forEach(attr => this.setAttribute(attr, newVal[attr]));
+          }
         });
       }
 
-      if ((fieldChanges.previousValue || {}).focus !== (fieldChanges.currentValue || {}).focus && this.elementRef.nativeElement.focus) {
-        this.elementRef.nativeElement[this.field.focus ? 'focus' : 'blur']();
+      this.attachAttrElement();
+      if (this.fieldAttrElements.length === 1) {
+        wrapProperty(this.field, 'focus', (value) => {
+          const element = this.fieldAttrElements ? this.fieldAttrElements[0] : null;
+          if (!element) {
+            return;
+          }
+
+          this.focusElement(element, value);
+        });
       }
     }
   }
@@ -75,29 +79,70 @@ export class FormlyAttributes implements OnChanges, DoCheck {
    */
   ngDoCheck() {
     if (this.placeholder !== this.to.placeholder) {
-      this.renderer.setAttribute(this.elementRef.nativeElement, 'placeholder', this.to.placeholder);
+      this.setAttribute('placeholder', this.to.placeholder);
       this.placeholder = this.to.placeholder;
     }
 
     if (this.tabindex !== this.to.tabindex) {
-      this.renderer.setAttribute(this.elementRef.nativeElement, 'tabindex', `${this.to.tabindex || 0}`);
+      this.setAttribute('tabindex', `${this.to.tabindex || 0}`);
       this.tabindex = this.to.tabindex;
     }
 
     if (this.readonly !== this.to.readonly) {
-      this.renderer.setAttribute(this.elementRef.nativeElement, 'readonly', `${this.to.readonly}`);
+      this.setAttribute('readonly', `${this.to.readonly}`);
       this.readonly = this.to.readonly;
     }
   }
 
-  private setAttributes(attributes) {
-    if (this.to.__attributes__ && this.to.__attributes__ !== attributes) {
-      Object.keys(this.to.__attributes__).forEach(name => this.renderer.removeAttribute(this.elementRef.nativeElement, name));
+  ngOnDestroy() {
+    this.detachAttrElement();
+  }
+
+  focusElement(element, value: boolean) {
+    if (!element.focus) {
+      return;
     }
 
-    this.to.__attributes__ = attributes;
-    Object.keys(attributes).forEach(name => this.renderer.setAttribute(
-      this.elementRef.nativeElement, name, attributes[name] as string,
-    ));
+    const isFocused = !!this.document.activeElement
+      && this.fieldAttrElements
+        .some(element => this.document.activeElement === element || element.contains(this.document.activeElement));
+
+    if (value && !isFocused) {
+      element.focus();
+    } else if (!value && isFocused) {
+      element.blur();
+    }
+  }
+
+  onFocus($event) {
+    if (!this.field.focus) {
+      this.field.focus = true;
+    }
+
+    if (this.to.focus) {
+      this.to.focus(this.field, $event);
+    }
+  }
+
+  onBlur($event) {
+    if (this.field.focus) {
+      this.field.focus = false;
+    }
+
+    if (this.to.blur) {
+      this.to.blur(this.field, $event);
+    }
+  }
+
+  private attachAttrElement() {
+    this.fieldAttrElements = [...this.fieldAttrElements, this.elementRef.nativeElement];
+  }
+
+  private detachAttrElement() {
+    this.fieldAttrElements = this.fieldAttrElements.filter(element => element !== this.elementRef.nativeElement);
+  }
+
+  private setAttribute(attr: string, value: string) {
+    this.renderer.setAttribute(this.elementRef.nativeElement, attr, value);
   }
 }

@@ -1,10 +1,10 @@
-import { Component } from '@angular/core';
-import { FormGroup } from '@angular/forms';
-import { FormlyFormOptions, FormlyFieldConfig } from '@ngx-formly/core';
+import { Component } from "@angular/core";
+import { FormGroup } from "@angular/forms";
+import { FormlyFormOptions, FormlyFieldConfig } from "@ngx-formly/core";
 
 @Component({
-  selector: 'formly-app-example',
-  templateUrl: './app.component.html',
+  selector: "formly-app-example",
+  templateUrl: "./app.component.html"
 })
 export class AppComponent {
   form = new FormGroup({});
@@ -13,17 +13,17 @@ export class AppComponent {
 
   fields: FormlyFieldConfig[] = [
     {
-      key: 'input',
-      type: 'input',
+      key: "input",
+      type: "input",
       templateOptions: {
-        label: 'Firstname',
+        label: "Firstname",
         addonLeft: {
-          class: 'fa fa-dashboard',
+          class: "fa fa-dashboard"
         },
         addonRight: {
-          text: '$',
-        },
-      },
+          text: "$"
+        }
+      }
     }
   ];
 }

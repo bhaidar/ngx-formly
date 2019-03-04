@@ -1,8 +1,8 @@
-import { Component, DoCheck, OnChanges, Input, SimpleChanges, Optional, EventEmitter, Output, SkipSelf, OnDestroy, ComponentFactoryResolver } from '@angular/core';
-import { FormGroup, FormArray, NgForm, FormGroupDirective } from '@angular/forms';
+import { Component, DoCheck, OnChanges, Input, SimpleChanges, Optional, EventEmitter, Output, OnDestroy, Attribute } from '@angular/core';
+import { FormGroup, FormArray, FormGroupDirective } from '@angular/forms';
 import { FormlyFieldConfig, FormlyFormOptions, FormlyFormOptionsCache } from './formly.field.config';
 import { FormlyFormBuilder } from '../services/formly.form.builder';
-import { assignModelValue, isNullOrUndefined, reverseDeepMerge } from '../utils';
+import { assignModelValue, isNullOrUndefined, reverseDeepMerge, wrapProperty, clone, defineHiddenProp } from '../utils';
 import { Subscription } from 'rxjs';
 import { debounceTime, map, tap } from 'rxjs/operators';
 
@@ -18,17 +18,29 @@ import { debounceTime, map, tap } from 'rxjs/operators';
     </formly-field>
     <ng-content></ng-content>
   `,
+  providers: [FormlyFormBuilder],
 })
 export class FormlyForm implements DoCheck, OnChanges, OnDestroy {
-  @Input() model: any = {};
   @Input() form: FormGroup | FormArray = new FormGroup({});
-  @Input() fields: FormlyFieldConfig[] = [];
-  @Input() options: FormlyFormOptions;
+
+  @Input()
+  set model(model: any) { this._model = this.immutable ? clone(model) : model; }
+  get model() { return this._model; }
+
+  @Input()
+  set fields(fields: FormlyFieldConfig[]) { this._fields = this.immutable ? clone(fields) : fields; }
+  get fields() { return this._fields; }
+
+  @Input()
+  set options(options: FormlyFormOptions) { this._options = this.immutable ? clone(options) : options; }
+  get options() { return this._options; }
+
   @Output() modelChange = new EventEmitter<any>();
 
-  /** @internal */
-  @Input() isRoot = true;
-
+  private immutable = false;
+  private _model: any;
+  private _fields: FormlyFieldConfig[];
+  private _options: FormlyFormOptions;
   private initialModel: any;
   private modelChangeSubs: Subscription[] = [];
 
@@ -44,18 +56,19 @@ export class FormlyForm implements DoCheck, OnChanges, OnDestroy {
 
   constructor(
     private formlyBuilder: FormlyFormBuilder,
-    private componentFactoryResolver: ComponentFactoryResolver,
-    @Optional() private parentForm: NgForm,
+    // tslint:disable-next-line
+    @Attribute('immutable') immutable,
     @Optional() private parentFormGroup: FormGroupDirective,
-    @Optional() @SkipSelf() private parentFormlyForm: FormlyForm,
-  ) {}
+  ) {
+    this.immutable = immutable !== null;
+  }
 
   ngDoCheck() {
     this.checkExpressionChange();
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (!this.fields || this.fields.length === 0 || !this.isRoot) {
+    if (!this.fields || this.fields.length === 0) {
       return;
     }
 
@@ -77,11 +90,13 @@ export class FormlyForm implements DoCheck, OnChanges, OnDestroy {
 
   changeModel(event: { key: string, value: any }) {
     assignModelValue(this.model, event.key, event.value);
-    this.modelChange.emit(this.model);
+    this.modelChange.emit(clone(this.model));
   }
 
   setOptions() {
-    this.options = this.options || {};
+    if (!this.options) {
+      this.options = {};
+    }
 
     if (!this.options.resetModel) {
       this.options.resetModel = (model ?: any) => {
@@ -95,7 +110,7 @@ export class FormlyForm implements DoCheck, OnChanges, OnDestroy {
 
         // we should call `NgForm::resetForm` to ensure changing `submitted` state after resetting form
         // but only when the current component is a root one.
-        if (!this.parentFormlyForm && this.options.parentForm && this.options.parentForm.control === this.form) {
+        if (this.options.parentForm && this.options.parentForm.control === this.form) {
           this.options.parentForm.resetForm(model);
         } else {
           this.form.reset(model);
@@ -103,23 +118,17 @@ export class FormlyForm implements DoCheck, OnChanges, OnDestroy {
       };
     }
 
-    if (!this.options.parentForm) {
-      this.options.parentForm = this.parentFormGroup || this.parentForm;
-    }
-
-    if (this.options.parentForm) {
-      let submitted = this.options.parentForm.submitted;
-      Object.defineProperty(this.options.parentForm, 'submitted', {
-        get: () => submitted,
-        set: value => {
-          submitted = value;
+    if (!this.options.parentForm && this.parentFormGroup) {
+      defineHiddenProp(this.options, 'parentForm', this.parentFormGroup);
+      wrapProperty(this.options.parentForm, 'submitted', (newVal, oldVal) => {
+        if (newVal !== !!oldVal) {
           (<FormlyFormOptionsCache> this.options)._markForCheck({
             fieldGroup: this.fields,
             model: this.model,
             formControl: this.form,
             options: this.options,
           });
-        },
+        }
       });
     }
 
@@ -128,32 +137,20 @@ export class FormlyForm implements DoCheck, OnChanges, OnDestroy {
     }
 
     if (!(<FormlyFormOptionsCache> this.options)._buildForm) {
-      (<FormlyFormOptionsCache> this.options)._buildForm = () => {
+      (<FormlyFormOptionsCache> this.options)._buildForm = (emitModelChange = false) => {
         this.clearModelSubscriptions();
         this.formlyBuilder.buildForm(this.form, this.fields, this.model, this.options);
         this.trackModelChanges(this.fields);
-      };
-    }
 
-    if (!(<FormlyFormOptionsCache> this.options)._markForCheck) {
-      (<FormlyFormOptionsCache> this.options)._markForCheck = (field) => {
-        if (field._componentRefs) {
-          field._componentRefs.forEach(ref => ref.changeDetectorRef.markForCheck());
-        }
-
-        if (field.fieldGroup) {
-          field.fieldGroup.forEach(f => (<FormlyFormOptionsCache> this.options)._markForCheck(f));
+        if (emitModelChange) {
+          this.modelChange.emit(clone(this.model));
         }
       };
-    }
-
-    if (!(<FormlyFormOptionsCache> this.options)._componentFactoryResolver) {
-      (<FormlyFormOptionsCache> this.options)._componentFactoryResolver = this.componentFactoryResolver;
     }
   }
 
   private checkExpressionChange() {
-    if (this.isRoot && (<FormlyFormOptionsCache> this.options)._checkField) {
+    if ((<FormlyFormOptionsCache> this.options)._checkField) {
       (<FormlyFormOptionsCache> this.options)._checkField({
         fieldGroup: this.fields,
         model: this.model,

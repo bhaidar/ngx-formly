@@ -1,10 +1,7 @@
 import { FormGroup, FormArray } from '@angular/forms';
 import { FormlyFieldConfig, FormlyValueChangeEvent, FormlyFieldConfigCache } from '../../components/formly.field.config';
-import {
-  isObject, isNullOrUndefined, isFunction,
-  FORMLY_VALIDATORS, getFieldValue, getKeyPath, removeFieldControl, defineHiddenProp,
-} from '../../utils';
-import { evalExpression, evalStringExpression, evalExpressionValueSetter } from './utils';
+import { isObject, isNullOrUndefined, isFunction, FORMLY_VALIDATORS, getKeyPath, defineHiddenProp } from '../../utils';
+import { evalExpression, evalStringExpression, evalExpressionValueSetter, removeFieldControl, addFieldControl } from './utils';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { FormlyExtension } from '../../services/formly.config';
@@ -67,12 +64,18 @@ export class FieldExpressionExtension implements FormlyExtension {
       }
     }
 
-    if (field.hideExpression || field.parent.hideExpression) {
+    if (field.hideExpression) {
       // delete hide value in order to force re-evaluate it in FormlyFormExpression.
       delete field.hide;
+
+      let parent = field.parent;
+      while (parent && !parent.hideExpression) {
+        parent = parent.parent;
+      }
+
       field.hideExpression = this._evalExpression(
         field.hideExpression,
-        field.parent && field.parent.hideExpression ? () => field.parent.hide : undefined,
+        parent && parent.hideExpression ? () => parent.hide : undefined,
       );
     }
   }
@@ -179,40 +182,32 @@ export class FieldExpressionExtension implements FormlyExtension {
       // toggle hide
       field.hide = hideExpressionResult;
       field.templateOptions.hidden = hideExpressionResult;
-
-      if (field.formControl && field.key) {
-        const parent = this.fieldParentFormControl(field);
-        if (parent) {
-          const control = parent.get(`${this.fieldKey(field)}`);
-          if (hideExpressionResult === true && control) {
-            removeFieldControl(parent, this.fieldKey(field));
-          } else if (hideExpressionResult === false && !control) {
-            this.addFieldControl(parent, field);
-          }
-        }
-      }
-
-      if (field.options.fieldChanges) {
-        field.options.fieldChanges.next(<FormlyValueChangeEvent> { field: field, type: 'hidden', value: hideExpressionResult });
-      }
+      this.toggleFormControl(field, hideExpressionResult);
     }
 
     return markForCheck;
   }
 
-  private addFieldControl(parent: FormArray | FormGroup, field: FormlyFieldConfig) {
-    const fieldModel = getFieldValue(field);
-    if (
-      !(isNullOrUndefined(field.formControl.value) && isNullOrUndefined(fieldModel))
-      && field.formControl.value !== fieldModel
-    ) {
-      field.formControl.patchValue(fieldModel, { emitEvent: false });
+  private toggleFormControl(field: FormlyFieldConfig, hide: boolean) {
+    if (field.fieldGroup) {
+      field.fieldGroup
+        .filter(f => !f.hideExpression)
+        .forEach(f => this.toggleFormControl(f, hide));
     }
 
-    if (parent instanceof FormArray) {
-      parent.push(field.formControl);
-    } else if (parent instanceof FormGroup) {
-      parent.addControl(`${this.fieldKey(field)}`, field.formControl);
+    if (field.formControl && field.key) {
+      const parent = this.fieldParentFormControl(field);
+      if (parent) {
+        if (hide === true && field.formControl.parent) {
+          removeFieldControl(parent, field);
+        } else if (hide === false && !field.formControl.parent) {
+          addFieldControl(parent, field);
+        }
+      }
+    }
+
+    if (field.options.fieldChanges) {
+      field.options.fieldChanges.next(<FormlyValueChangeEvent> { field: field, type: 'hidden', value: hide });
     }
   }
 
@@ -221,9 +216,5 @@ export class FieldExpressionExtension implements FormlyExtension {
     paths.pop(); // remove last path
 
     return (paths.length > 0 ? field.parent.formControl.get(paths) : field.parent.formControl) as any;
-  }
-
-  private fieldKey(field: FormlyFieldConfig) {
-    return getKeyPath(field).pop();
   }
 }

@@ -2,6 +2,105 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="5.0.0-rc.9"></a>
+# [5.0.0-rc.9](https://github.com/ngx-formly/ngx-formly/compare/v5.0.0-rc.8...v5.0.0-rc.9) (2019-03-03)
+
+
+### Bug Fixes
+
+* **core:** ensure repeat form is in sync with the model val ([#1451](https://github.com/ngx-formly/ngx-formly/issues/1451)) ([77feb5b](https://github.com/ngx-formly/ngx-formly/commit/77feb5b)), closes [#1450](https://github.com/ngx-formly/ngx-formly/issues/1450)
+
+
+
+<a name="5.0.0-rc.8"></a>
+# [5.0.0-rc.8](https://github.com/ngx-formly/ngx-formly/compare/v5.0.0-rc.7...v5.0.0-rc.8) (2019-02-26)
+
+
+### Bug Fixes
+
+* **core:** avoid override hide field within fieldGroup ([#1444](https://github.com/ngx-formly/ngx-formly/issues/1444)) ([92057d4](https://github.com/ngx-formly/ngx-formly/commit/92057d4)), closes [#1259](https://github.com/ngx-formly/ngx-formly/issues/1259)
+
+
+
+<a name="5.0.0-rc.7"></a>
+# [5.0.0-rc.7](https://github.com/ngx-formly/ngx-formly/compare/v5.0.0-rc.6...v5.0.0-rc.7) (2019-02-22)
+
+
+### Bug Fixes
+
+* **core:** assign a valid value for nested key model ([#1438](https://github.com/ngx-formly/ngx-formly/issues/1438)) ([1ac2c39](https://github.com/ngx-formly/ngx-formly/commit/1ac2c39)), closes [#1437](https://github.com/ngx-formly/ngx-formly/issues/1437)
+* **ionic:** user setFocus instead of native focus callback ([#1442](https://github.com/ngx-formly/ngx-formly/issues/1442)) ([309a9d6](https://github.com/ngx-formly/ngx-formly/commit/309a9d6)), closes [#1374](https://github.com/ngx-formly/ngx-formly/issues/1374)
+
+
+
+<a name="5.0.0-rc.6"></a>
+# [5.0.0-rc.6](https://github.com/ngx-formly/ngx-formly/compare/v5.0.0-rc.5...v5.0.0-rc.6) (2019-02-21)
+
+
+### Bug Fixes
+
+* **core:** fix memory leak when using immutable attr ([#1434](https://github.com/ngx-formly/ngx-formly/issues/1434)) ([0885836](https://github.com/ngx-formly/ngx-formly/commit/0885836))
+
+
+
+<a name="5.0.0-rc.5"></a>
+# [5.0.0-rc.5](https://github.com/ngx-formly/ngx-formly/compare/v5.0.0-rc.4...v5.0.0-rc.5) (2019-02-19)
+
+
+### Bug Fixes
+
+* **core:** manage field focus of multi formlyAttributes ([#1433](https://github.com/ngx-formly/ngx-formly/issues/1433)) ([bcae130](https://github.com/ngx-formly/ngx-formly/commit/bcae130)), closes [#1428](https://github.com/ngx-formly/ngx-formly/issues/1428)
+* **core:** revert [#1427](https://github.com/ngx-formly/ngx-formly/issues/1427) in favor of immutable mode ([#1430](https://github.com/ngx-formly/ngx-formly/issues/1430)) ([#1431](https://github.com/ngx-formly/ngx-formly/issues/1431)) ([54dfcd4](https://github.com/ngx-formly/ngx-formly/commit/54dfcd4))
+
+
+### Features
+
+* **core:** add support for immutable mode ([#1430](https://github.com/ngx-formly/ngx-formly/issues/1430)) ([e6560c6](https://github.com/ngx-formly/ngx-formly/commit/e6560c6)), closes [#1429](https://github.com/ngx-formly/ngx-formly/issues/1429)
+
+
+
+<a name="5.0.0-rc.4"></a>
+# [5.0.0-rc.4](https://github.com/ngx-formly/ngx-formly/compare/v5.0.0-rc.3...v5.0.0-rc.4) (2019-02-18)
+
+
+### Bug Fixes
+
+* **core:** cleanup fields on destroy ([#1427](https://github.com/ngx-formly/ngx-formly/issues/1427)) ([b494515](https://github.com/ngx-formly/ngx-formly/commit/b494515)), closes [#1426](https://github.com/ngx-formly/ngx-formly/issues/1426)
+
+
+
+<a name="5.0.0-rc.3"></a>
+# [5.0.0-rc.3](https://github.com/ngx-formly/ngx-formly/compare/v5.0.0-rc.2...v5.0.0-rc.3) (2019-02-15)
+
+
+### Bug Fixes
+
+* **core:** display async validation message for OnPush CD ([#1419](https://github.com/ngx-formly/ngx-formly/issues/1419)) ([344b697](https://github.com/ngx-formly/ngx-formly/commit/344b697)), closes [#1417](https://github.com/ngx-formly/ngx-formly/issues/1417)
+* **core:** improve managing focus with expressionProperties ([#1421](https://github.com/ngx-formly/ngx-formly/issues/1421)) ([405d8cc](https://github.com/ngx-formly/ngx-formly/commit/405d8cc)), closes [#1413](https://github.com/ngx-formly/ngx-formly/issues/1413)
+
+
+### Features
+
+* **core:** mark builder optional for FieldArrayType ([#1418](https://github.com/ngx-formly/ngx-formly/issues/1418)) ([692f84e](https://github.com/ngx-formly/ngx-formly/commit/692f84e))
+
+
+
+<a name="5.0.0-rc.0"></a>
+# [5.0.0-rc.0](https://github.com/ngx-formly/ngx-formly/compare/v5.0.0-beta.24...v5.0.0-rc.0) (2019-02-07)
+
+To upgrade from 4.0 to 5.0 see [UPGRADE-5.0](./UPGRADE-5.0.md)
+
+
+<a name="5.0.0-beta.24"></a>
+# [5.0.0-beta.24](https://github.com/ngx-formly/ngx-formly/compare/v5.0.0-beta.23...v5.0.0-beta.24) (2019-02-03)
+
+
+### Features
+
+* **bootstrap:** add inline support for multicheckboxe and radio ([#1407](https://github.com/ngx-formly/ngx-formly/issues/1407)) ([31a5784](https://github.com/ngx-formly/ngx-formly/commit/31a5784)), closes [#1400](https://github.com/ngx-formly/ngx-formly/issues/1400)
+
+
+
 <a name="5.0.0-beta.23"></a>
 # [5.0.0-beta.23](https://github.com/ngx-formly/ngx-formly/compare/v5.0.0-beta.22...v5.0.0-beta.23) (2019-01-20)
 

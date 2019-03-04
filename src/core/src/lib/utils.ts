@@ -1,6 +1,6 @@
 import { FormlyFieldConfig } from './core';
 import { Observable } from 'rxjs';
-import { AbstractControl, FormArray, FormGroup } from '@angular/forms';
+import { AbstractControl } from '@angular/forms';
 
 export function getFieldId(formId: string, field: FormlyFieldConfig, index: string|number) {
   if (field.id) return field.id;
@@ -140,15 +140,23 @@ export function clone(value: any): any {
   return value;
 }
 
-export function removeFieldControl(form: FormArray | FormGroup, key: string | number) {
-  if (form instanceof FormArray) {
-    form.removeAt(key as number);
-  } else if (form instanceof FormGroup) {
-    form.removeControl(`${key}`);
-  }
-}
-
 export function defineHiddenProp(field, prop, defaultValue) {
   Object.defineProperty(field, prop, { enumerable: false, writable: true, configurable: true });
   field[prop] = defaultValue;
+}
+
+export function wrapProperty(field, prop, setFn: (newVal: any, oldVal?: any) => void) {
+  let value = field[prop];
+  setFn(value);
+
+  Object.defineProperty(field, prop, {
+    configurable: true,
+    get: () => value,
+    set: newVal => {
+      if (newVal !== value) {
+        setFn(newVal, value);
+        value = newVal;
+      }
+    },
+  });
 }

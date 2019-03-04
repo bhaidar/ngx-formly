@@ -76,6 +76,10 @@ export class FieldValidationExtension implements FormlyExtension {
           field._asyncValidators.push((control: AbstractControl) => new Promise((resolve) => {
             return validator(control, field).then((result: boolean) => {
               resolve(result ? null : { [validatorName]: true });
+              // workaround for https://github.com/angular/angular/issues/13200
+              if (field.options && field.options._markForCheck) {
+                field.options._markForCheck(field);
+              }
             });
           }));
         } else {

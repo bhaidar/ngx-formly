@@ -1,8 +1,8 @@
-import { NgModule } from '@angular/core';
-import { RouterModule } from '@angular/router';
-import { SharedModule, ExamplesRouterViewerComponent } from '../../../shared';
-import { AppModule } from './app.module';
-import { AppComponent } from './app.component';
+import { NgModule } from "@angular/core";
+import { RouterModule } from "@angular/router";
+import { SharedModule, ExamplesRouterViewerComponent } from "../../../shared";
+import { AppModule } from "./app.module";
+import { AppComponent } from "./app.component";
 
 @NgModule({
   imports: [
@@ -10,27 +10,49 @@ import { AppComponent } from './app.component';
     AppModule,
     RouterModule.forChild([
       {
-        path: '',
+        path: "",
         component: ExamplesRouterViewerComponent,
         data: {
-          examples: [{
-            title: 'Material Prefix and Suffix',
-            description: `
+          examples: [
+            {
+              title: "Material Prefix and Suffix",
+              description: `
               This demonstrates adding a material suffix and prefix for material form fields.
             `,
-            component: AppComponent,
-            files: [
-              { file: 'app.component.html', content: require('!!prismjs-loader?lang=html!./app.component.html'), filecontent: require('!!raw-loader?lang=html!./app.component.html') },
-              { file: 'app.component.ts', content: require('!!prismjs-loader?lang=typescript!./app.component.ts'), filecontent: require('!!raw-loader?lang=typescript!./app.component.ts') },
-              { file: 'addons.ts', content: require('!!prismjs-loader?lang=typescript!./addons.ts'), filecontent: require('!!raw-loader?lang=typescript!./addons.ts') },
-              { file: 'addon.ts', content: require('!!prismjs-loader?lang=typescript!./addon.ts'), filecontent: require('!!raw-loader?lang=typescript!./addon.ts') },
-              { file: 'app.module.ts', content: require('!!prismjs-loader?lang=typescript!./app.module.ts'), filecontent: require('!!raw-loader?lang=typescript!./app.module.ts') },
-            ],
-          }],
-        },
-      },
-    ]),
+              component: AppComponent,
+              files: [
+                {
+                  file: "app.component.html",
+                  content: require("!!highlight-loader?raw=true&lang=html!./app.component.html"),
+                  filecontent: require("!!raw-loader!./app.component.html")
+                },
+                {
+                  file: "app.component.ts",
+                  content: require("!!highlight-loader?raw=true&lang=typescript!./app.component.ts"),
+                  filecontent: require("!!raw-loader!./app.component.ts")
+                },
+                {
+                  file: "addons.wrapper.ts",
+                  content: require("!!highlight-loader?raw=true&lang=typescript!./addons.wrapper.ts"),
+                  filecontent: require("!!raw-loader!./addons.wrapper.ts")
+                },
+                {
+                  file: "addons.extension.ts",
+                  content: require("!!highlight-loader?raw=true&lang=typescript!./addons.extension.ts"),
+                  filecontent: require("!!raw-loader!./addons.extension.ts")
+                },
+                {
+                  file: "app.module.ts",
+                  content: require("!!highlight-loader?raw=true&lang=typescript!./app.module.ts"),
+                  filecontent: require("!!raw-loader!./app.module.ts")
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ])
   ],
-  entryComponents: [AppComponent],
+  entryComponents: [AppComponent]
 })
-export class ConfigModule { }
+export class ConfigModule {}

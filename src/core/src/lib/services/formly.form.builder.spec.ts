@@ -1,12 +1,10 @@
-import { FormlyFormBuilder, FormlyConfig, FormlyFieldConfig } from '../core';
-import { FormGroup, Validators, FormControl, FormArray } from '@angular/forms';
+import { TestBed, inject } from '@angular/core/testing';
 import { Component } from '@angular/core';
+import { FormlyFormBuilder, FormlyConfig, FormlyFieldConfig, FieldArrayType } from '../core';
+import { FormGroup, Validators, FormControl, FormArray } from '@angular/forms';
 import { MockComponent } from '../test-utils';
 import { FormlyFieldConfigCache } from '../components/formly.field.config';
-import { FieldExpressionExtension } from '../extensions';
-import { FieldValidationExtension } from '../extensions/field-validation/field-validation';
-import { FieldFormExtension } from '../extensions/field-form/field-form';
-import { CoreExtension } from '../extensions/core/core';
+import { FormlyModule } from '../core.module';
 
 describe('FormlyFormBuilder service', () => {
   let builder: FormlyFormBuilder;
@@ -17,25 +15,27 @@ describe('FormlyFormBuilder service', () => {
 
   beforeEach(() => {
     TestComponent = MockComponent({ selector: 'formly-test-cmp' });
-    form = new FormGroup({});
-    config = new FormlyConfig();
-    config.addConfig({
-      types: [
-        { name: 'input', component: TestComponent },
-        { name: 'input-createcontrol', component: TestComponentThatCreatesControl },
-      ],
-      wrappers: [{ name: 'label', component: TestComponent, types: ['input'] }],
-      validators: [{ name: 'required', validation: Validators.required }],
-      extensions: [
-        { name: 'core', extension: new CoreExtension(config) },
-        { name: 'field-validation', extension: new FieldValidationExtension(config) },
-        { name: 'field-form', extension: new FieldFormExtension() },
-        { name: 'field-expression', extension: new FieldExpressionExtension() },
+    TestBed.configureTestingModule({
+      declarations: [TestComponent, TestComponentThatCreatesControl, RepeatComponent],
+      imports: [
+        FormlyModule.forRoot({
+          types: [
+            { name: 'input', component: TestComponent },
+            { name: 'array', component: RepeatComponent },
+            { name: 'input-createcontrol', component: TestComponentThatCreatesControl },
+          ],
+          wrappers: [{ name: 'label', component: TestComponent, types: ['input'] }],
+          validators: [{ name: 'required', validation: Validators.required }],
+        }),
       ],
     });
-
-    builder = new FormlyFormBuilder(config, null);
   });
+
+  beforeEach(inject([FormlyFormBuilder, FormlyConfig], (formlyBuilder: FormlyFormBuilder, formlyConfig: FormlyConfig) => {
+    form = new FormGroup({});
+    config = formlyConfig;
+    builder = formlyBuilder;
+  }));
 
   it('custom extension', () => {
     const customExtension: any = {
@@ -77,7 +77,7 @@ describe('FormlyFormBuilder service', () => {
 
     it('should create FormArray control when fieldArray is set', () => {
       const fields: FormlyFieldConfig[] = [
-        { key: 'test', type: 'input', fieldArray: {} },
+        { key: 'test', type: 'array', fieldArray: {} },
       ];
 
       builder.buildForm(form, fields, {}, {});
@@ -118,7 +118,7 @@ describe('FormlyFormBuilder service', () => {
         },
         {
           key: 'fieldArray',
-          type: 'input',
+          type: 'array',
           formControl: new FormArray([new FormControl('aa')]),
         },
       ];
@@ -375,6 +375,7 @@ describe('FormlyFormBuilder service', () => {
       let model = {};
       field = {
         key: 'address',
+        type: 'array',
         fieldGroup: [],
         fieldArray: {
           fieldGroup: [
@@ -528,6 +529,14 @@ describe('FormlyFormBuilder service', () => {
 
       expect(field.key).toEqual('nested.title');
       expect(field.wrappers).toEqual(['label']);
+      expect(field.model).toEqual({ nested: { title: undefined } });
+    });
+    it('nested array key', () => {
+      field = { key: 'nested.0.title', type: 'input' };
+      builder.buildForm(form, [field], {}, {});
+
+      expect(field.key).toEqual('nested.0.title');
+      expect(field.model).toEqual({ nested: [{ title: undefined }] });
     });
 
     it('should not override wrappers if not empty', () => {
@@ -670,7 +679,7 @@ describe('FormlyFormBuilder service', () => {
       const fields: FormlyFieldConfig[] = [
         {
           key: 'array',
-          type: 'input',
+          type: 'array',
           fieldArray: {
             key: 'test',
             type: 'input',
@@ -685,8 +694,18 @@ describe('FormlyFormBuilder service', () => {
   });
 });
 
+@Component({
+  selector: 'formly-test-component',
+  template: '',
+})
 export class TestComponentThatCreatesControl {
   static createControl(model, field) {
     return new FormControl('created by component');
   }
 }
+
+@Component({
+  selector: 'formly-repeat-section',
+  template: '',
+})
+class RepeatComponent extends FieldArrayType { }
